@@ -1,0 +1,107 @@
+﻿@model GalzenJobPortal.Models.PaginatedJobsViewModel
+
+@{
+    ViewBag.Title = "Jobs";
+    Layout = "~/Views/Shared/JobSeekerLayout.cshtml";
+
+    var categories = Model.Jobs.Select(job => new { job.CategoryName, job.CategoryID })
+                               .Distinct()
+                               .ToList();
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar filter -->
+        <div class="col-md-3">
+            <div class="card p-2">
+                <h4>Apply filters</h4>
+                <div class="input-group">
+                    <input type="text" id="searchString" placeholder="Search..." class="form-control" value="@Model.SearchString" />
+                    <span class="input-group-btn ml-1">
+                        <a href="#" id="searchButton" class="btn btn-primary">Search</a>
+                    </span>
+                </div>
+
+                <p class="mt-3">Categories :</p>
+                @foreach (var cat in categories)
+                {
+                    <a href="@Url.Action("Jobs", "JobSeeker", new { search = cat.CategoryName })" class="d-block filter-category">@cat.CategoryName</a>
+                }
+            </div>
+        </div>
+
+        <!-- Job listings -->
+        <div class="col-md-9">
+            @if (!Model.Jobs.Any())
+            {
+                <p>No jobs found</p>
+            }
+            else
+            {
+                foreach (var item in Model.Jobs.OrderByDescending(j => j.JobID))
+                {
+                    <div class="row mt-2">
+                        <div class="card p-2 w-100">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <img alt="CompanyLogo" src="data:image/png;base64,@Convert.ToBase64String(item.CompanyLogo)" class="rounded" width="60" height="60" />
+                                </div>
+                                <div class="col-md-10">
+                                    <h4>@item.JobTitle</h4>
+                                    <p class="text-muted mb-1"><i class="fa fa-building-o"></i> @item.CompanyName</p>
+                                    <p class="text-muted mb-1">
+                                        <i class="fa fa-briefcase"></i> @item.CategoryName,
+                                        <i class="fa fa-map-marker"></i> @item.Location
+                                    </p>
+                                    <p class="text-muted mb-1"><i class="fa fa-money"></i> @item.Salary</p>
+                                    <div style="text-align: right;">
+                                        @Html.ActionLink("Details", "JobDetails", new { id = item.JobID }, new { @class = "btn btn-outline-primary" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Jobs", new { search = Model.SearchString, page = Model.CurrentPage - 1 })">Previous</a>
+                        </li>
+                    }
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("Jobs", new { search = Model.SearchString, page = i })">@i</a>
+                        </li>
+                    }
+
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Jobs", new { search = Model.SearchString, page = Model.CurrentPage + 1 })">Next</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/jquery-3.7.1.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#searchButton").click(function () {
+            var searchString = $("#searchString").val();
+            var url = "@Url.Action("Jobs", "JobSeeker")?search=" + encodeURIComponent(searchString);
+            window.location.href = url;
+        });
+    });
+</script>
